@@ -4,13 +4,13 @@ export class Player extends Entity {
   constructor(x, y) {
     super(x, y, 28, 34, '#ffd166');
     this.speed = 220;
-    this.jumpStrength = 460;
+    this.jumpStrength = 560;
     this.gravity = 1200;
     this.velocityY = 0;
     this.grounded = false;
   }
 
-  update(deltaTime, input, canvas, platforms) {
+  update(deltaTime, input, canvas, platforms, worldWidth = canvas.width) {
     const previousY = this.y;
     const horizontalDirection = Number(input.isDown('arrowright') || input.isDown('d'))
       - Number(input.isDown('arrowleft') || input.isDown('a'));
@@ -39,7 +39,7 @@ export class Player extends Entity {
       }
     }
 
-    this.x = Math.max(0, Math.min(canvas.width - this.width, this.x));
+    this.x = Math.max(0, Math.min(worldWidth - this.width, this.x));
 
     if (this.y > canvas.height + this.height) {
       this.x = 80;
