@@ -10,13 +10,15 @@ export class PlayState {
     this.score = 0;
     this.platforms = [
       new Platform(0, 416, 800, 34),
-      new Platform(150, 330, 150),
-      new Platform(385, 270, 145),
-      new Platform(590, 350, 150),
+      new Platform(60, 360, 130),
+      new Platform(210, 310, 130),
+      new Platform(360, 260, 130),
+      new Platform(510, 210, 130),
+      new Platform(660, 160, 120),
     ];
     this.questionBlocks = [
-      new QuestionBlock(220, 296),
-      new QuestionBlock(455, 236),
+      new QuestionBlock(258, 276),
+      new QuestionBlock(558, 176),
     ];
   }
 
