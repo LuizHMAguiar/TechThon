@@ -1,4 +1,3 @@
-import { Enemy } from '../entities/Enemy.js';
 import { Platform } from '../entities/Platform.js';
 import { Player } from '../entities/Player.js';
 import { QuestionBlock } from '../entities/QuestionBlock.js';
@@ -8,7 +7,6 @@ export class PlayState {
   constructor(game) {
     this.game = game;
     this.player = new Player(80, 300);
-    this.enemy = new Enemy(650, 300);
     this.score = 0;
     this.platforms = [
       new Platform(0, 416, 800, 34),
@@ -28,7 +26,6 @@ export class PlayState {
 
   update(deltaTime) {
     this.player.update(deltaTime, this.game.input, this.game.canvas, this.platforms);
-    this.enemy.update(deltaTime);
 
     for (const block of this.questionBlocks) {
       if (!block.used && !block.questionAsked && intersects(this.player, block)) {
@@ -45,7 +42,6 @@ export class PlayState {
     for (const platform of this.platforms) platform.render(context);
     for (const block of this.questionBlocks) block.render(context);
     this.player.render(context);
-    this.enemy.render(context);
 
     context.fillStyle = '#ffffff';
     context.font = 'bold 18px monospace';
