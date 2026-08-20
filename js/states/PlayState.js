@@ -64,6 +64,8 @@ export class PlayState {
     } else {
       window.alert('Resposta incorreta. Tente o proximo bloco!');
     }
+
+    this.game.input.clear();
   }
 
   renderBackground(context) {

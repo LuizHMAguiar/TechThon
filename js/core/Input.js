@@ -4,7 +4,11 @@ export class Input {
     this.pointer = { x: 0, y: 0, pressed: false };
 
     window.addEventListener('keydown', (event) => {
-      this.keys.add(event.key.toLowerCase());
+      const key = event.key.toLowerCase();
+      if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'w', 'a', 's', 'd'].includes(key)) {
+        event.preventDefault();
+        this.keys.add(key);
+      }
     });
     window.addEventListener('keyup', (event) => {
       this.keys.delete(event.key.toLowerCase());
@@ -17,10 +21,16 @@ export class Input {
     window.addEventListener('pointerup', () => {
       this.pointer.pressed = false;
     });
+    window.addEventListener('blur', () => this.clear());
   }
 
   isDown(key) {
     return this.keys.has(key.toLowerCase());
+  }
+
+  clear() {
+    this.keys.clear();
+    this.pointer.pressed = false;
   }
 
   updatePointer(event, canvas) {
