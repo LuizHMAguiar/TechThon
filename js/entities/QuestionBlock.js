@@ -1,8 +1,9 @@
 import { Entity } from './Entity.js';
 
 export class QuestionBlock extends Entity {
-  constructor(x, y) {
+  constructor(x, y, question) {
     super(x, y, 34, 34, '#f6bd24');
+    this.question = question;
     this.used = false;
     this.questionAsked = false;
   }

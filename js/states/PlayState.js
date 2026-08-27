@@ -11,28 +11,50 @@ export class PlayState {
     this.cameraY = 0;
     this.worldWidth = 800;
     this.worldTop = -900;
+    this.cloudImage = game.assets.loadImage('cloud', './assets/Nuvem.png');
+    this.platformImage = game.assets.loadImage(
+      'grass-platform',
+      './assets/Design%20sem%20nome%20(1).png',
+    );
+    this.cloudStartY = -450;
+    this.clouds = [
+      { x: 40, y: -490, width: 150, height: 77 },
+      { x: 575, y: -735, width: 115, height: 59 },
+    ];
     this.platforms = [
-      new Platform(0, 416, this.worldWidth, 34),
-      new Platform(80, 350, 150),
-      new Platform(330, 260, 150),
-      new Platform(170, 170, 150),
-      new Platform(420, 80, 150),
-      new Platform(100, -10, 150),
-      new Platform(350, -100, 150),
-      new Platform(200, -190, 150),
-      new Platform(460, -280, 150),
-      new Platform(120, -370, 150),
-      new Platform(380, -460, 150),
-      new Platform(240, -550, 150),
-      new Platform(470, -640, 150),
-      new Platform(150, -730, 150),
-      new Platform(390, -820, 150),
+      new Platform(0, 416, this.worldWidth, 34, this.platformImage),
+      new Platform(80, 350, 150, 18, this.platformImage),
+      new Platform(330, 260, 150, 18, this.platformImage),
+      new Platform(170, 170, 150, 18, this.platformImage),
+      new Platform(420, 80, 150, 18, this.platformImage),
+      new Platform(100, -10, 150, 18, this.platformImage),
+      new Platform(350, -100, 150, 18, this.platformImage),
+      new Platform(200, -190, 150, 18, this.platformImage),
+      new Platform(460, -280, 150, 18, this.platformImage),
+      new Platform(120, -370, 150, 18, this.platformImage),
+      new Platform(380, -460, 150, 18, this.platformImage),
+      new Platform(240, -550, 150, 18, this.platformImage),
+      new Platform(470, -640, 150, 18, this.platformImage),
+      new Platform(150, -730, 150, 18, this.platformImage),
+      new Platform(390, -820, 150, 18, this.platformImage),
     ];
     this.questionBlocks = [
-      new QuestionBlock(378, 226),
-      new QuestionBlock(218, -44),
-      new QuestionBlock(508, -314),
-      new QuestionBlock(288, -584),
+      new QuestionBlock(378, 226, {
+        text: 'O que sera impresso?\n\nprint(2 + 3 * 4)\n\nDigite apenas o numero:',
+        answer: '14',
+      }),
+      new QuestionBlock(218, -44, {
+        text: 'O que sera impresso?\n\nprint("Py" + "thon")\n\nDigite a palavra:',
+        answer: 'Python',
+      }),
+      new QuestionBlock(508, -314, {
+        text: 'O que sera impresso?\n\nprint(len("jogo"))\n\nDigite apenas o numero:',
+        answer: '4',
+      }),
+      new QuestionBlock(288, -584, {
+        text: 'O que sera impresso?\n\nprint(10 // 3)\n\nDigite apenas o numero:',
+        answer: '3',
+      }),
     ];
   }
 
@@ -58,12 +80,11 @@ export class PlayState {
   }
 
   render(context) {
-    context.fillStyle = '#77c9f2';
-    context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+    this.renderSky(context);
 
     context.save();
     context.translate(0, -this.cameraY);
-    this.renderBackground(context);
+    this.renderClouds(context);
     for (const platform of this.platforms) platform.render(context);
     for (const block of this.questionBlocks) block.render(context);
     this.player.render(context);
@@ -79,11 +100,9 @@ export class PlayState {
 
   openQuestion(block) {
     block.questionAsked = true;
-    const answer = window.prompt(
-      'QUESTAO PYTHON\n\nO que sera impresso?\n\nprint(2 ** 3)\n\nDigite apenas o numero:',
-    );
+    const answer = window.prompt(`QUESTAO PYTHON\n\n${block.question.text}`);
 
-    if (answer?.trim() === '8') {
+    if (answer?.trim() === block.question.answer) {
       block.used = true;
       this.score += 100;
       window.alert('Correto! +100 pontos');
@@ -94,16 +113,54 @@ export class PlayState {
     this.game.input.clear();
   }
 
-  renderBackground(context) {
-    context.fillStyle = '#fff4b8';
-    context.fillRect(0, 385, this.worldWidth, 31);
-    context.fillStyle = '#ffffff';
-    context.fillRect(90, 85, 78, 16);
-    context.fillRect(115, 72, 42, 29);
-    context.fillRect(590, 10, 92, 15);
-    context.fillRect(620, -5, 45, 30);
-    context.fillRect(70, -230, 78, 16);
-    context.fillRect(95, -243, 42, 29);
+  renderSky(context) {
+    const skyStops = [
+      { progress: 0, horizon: [184, 229, 245], zenith: [83, 162, 218] },
+      { progress: 0.25, horizon: [128, 199, 237], zenith: [65, 108, 190] },
+      { progress: 0.5, horizon: [74, 158, 224], zenith: [30, 54, 137] },
+      { progress: 0.75, horizon: [33, 82, 153], zenith: [8, 21, 64] },
+      { progress: 1, horizon: [9, 17, 31], zenith: [1, 2, 8] },
+    ];
+    const progress = Math.max(0, Math.min(1, (300 - this.player.y) / 1120));
+    const scaledProgress = progress * (skyStops.length - 1);
+    const stopIndex = Math.min(skyStops.length - 2, Math.floor(scaledProgress));
+    const blend = scaledProgress - stopIndex;
+    const currentStop = skyStops[stopIndex];
+    const nextStop = skyStops[stopIndex + 1];
+    const horizon = this.blendColors(currentStop.horizon, nextStop.horizon, blend);
+    const zenith = this.blendColors(currentStop.zenith, nextStop.zenith, blend);
+    const gradient = context.createLinearGradient(0, 0, 0, this.game.canvas.height);
+
+    gradient.addColorStop(0, `rgb(${zenith.join(', ')})`);
+    gradient.addColorStop(1, `rgb(${horizon.join(', ')})`);
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+  }
+
+  blendColors(startColor, endColor, amount) {
+    return startColor.map((channel, index) =>
+      Math.round(channel + (endColor[index] - channel) * amount),
+    );
+  }
+
+  renderClouds(context) {
+    if (!this.cloudImage.complete || this.cloudImage.naturalWidth === 0) {
+      return;
+    }
+
+    for (const cloud of this.clouds) {
+      if (cloud.y > this.cloudStartY) {
+        continue;
+      }
+
+      context.drawImage(
+        this.cloudImage,
+        cloud.x,
+        cloud.y,
+        cloud.width,
+        cloud.height,
+      );
+    }
   }
 
   updateCamera() {
