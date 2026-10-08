@@ -5,9 +5,16 @@ export class QuestionBlock extends Entity {
     super(x, y, 34, 34, '#f6bd24');
     this.question = question;
     this.texture = texture;
+    this.baseY = y;
+    this.time = 0;
     this.transparentTexture = null;
     this.used = false;
     this.questionAsked = false;
+  }
+
+  update(deltaTime) {
+    this.time += deltaTime;
+    this.y = this.baseY + Math.sin(this.time * 4) * 5;
   }
 
   render(context) {

@@ -16,6 +16,10 @@ export class PlayState {
     this.cameraY = 0;
     this.worldWidth = 800;
     this.worldTop = -1720;
+    this.elapsedTime = 0;
+    this.blackHole = { x: 400, y: -5200, pullRadius: 320, eventHorizon: 48 };
+    this.blackHoleDistance = Infinity;
+    this.blackHoleCaptured = false;
     this.cloudImage = game.assets.loadImage('cloud', './assets/Nuvem.png');
     this.platformImage = game.assets.loadImage(
       'grass-platform',
@@ -68,6 +72,9 @@ export class PlayState {
       new Platform(230, -1550, 130, 34, this.platformImage),
       new Platform(470, -1660, 130, 34, this.platformImage),
     ];
+    this.nextPlatformY = Math.min(...this.platforms.map((platform) => platform.y)) - 110;
+    this.generatedPlatformXs = [320, 170, 320, 470, 620, 470];
+    this.generatedPlatformIndex = 0;
     this.questionBlocks = [
       new QuestionBlock(378, 176, {
         text: 'O que sera impresso?\n\nprint(2 + 3 * 4)\n\nDigite apenas o numero:',
@@ -94,12 +101,11 @@ export class PlayState {
       new Coin(430 + 65, -1660 - 25, this.coinImage),
     ];
     this.plants = [
-      new Plant(340, -274, this.plantImage),
-      new Plant(200, -447, this.plantImage),
-      new Plant(335, -620, this.plantImage),
-      new Plant(170, -1055, this.plantImage),
-      new Plant(300, -1390, this.plantImage),
-      new Plant(230, -1620, this.plantImage),
+      new Plant(401, -273, this.plantImage),
+      new Plant(401, -603, this.plantImage),
+      new Plant(231, -1043, this.plantImage),
+      new Plant(351, -1373, this.plantImage),
+      new Plant(281, -1593, this.plantImage),
     ];
     this.questionKeyHandler = (event) => {
       if (!this.questionScreen) {
@@ -144,6 +150,7 @@ export class PlayState {
       return;
     }
 
+    this.elapsedTime += deltaTime;
     this.player.update(
       deltaTime,
       this.game.input,
@@ -151,9 +158,15 @@ export class PlayState {
       this.platforms,
       this.worldWidth,
     );
+    this.generatePlatformsAhead();
+    this.updateBlackHole(deltaTime);
     this.updateCamera();
+    if (this.gameOver) {
+      return;
+    }
 
     for (const block of this.questionBlocks) {
+      block.update(deltaTime);
       if (!block.used && !block.questionAsked && intersects(this.player, block)) {
         this.openQuestion(block);
       }
@@ -168,6 +181,7 @@ export class PlayState {
     }
 
     for (const plant of this.plants) {
+      plant.update(deltaTime);
       if (intersects(this.player, plant)) {
         this.gameOver = true;
         this.game.input.clear();
@@ -196,6 +210,11 @@ export class PlayState {
     context.fillText(`PONTOS: ${this.score}`, 18, 30);
     context.font = '14px monospace';
     context.fillText('SETAS/WASD: mover  ESPACO: pular', 18, 52);
+    if (this.blackHoleDistance < this.blackHole.pullRadius && !this.gameOver) {
+      context.fillStyle = '#ffd47a';
+      context.textAlign = 'center';
+      context.fillText('ATRACAO DO BURACO NEGRO!', this.game.canvas.width / 2, 78);
+    }
 
     if (this.gameOver) {
       context.fillStyle = 'rgba(20, 15, 30, 0.78)';
@@ -203,7 +222,11 @@ export class PlayState {
       context.fillStyle = '#ffffff';
       context.textAlign = 'center';
       context.font = 'bold 42px monospace';
-      context.fillText('VOCE PERDEU!', this.game.canvas.width / 2, 190);
+      context.fillText(
+        this.blackHoleCaptured ? 'O BURACO NEGRO TE PUXOU!' : 'VOCE PERDEU!',
+        this.game.canvas.width / 2,
+        190,
+      );
       context.font = '18px monospace';
       context.fillText('Enter ou clique para tentar novamente', this.game.canvas.width / 2, 235);
     }
@@ -219,6 +242,9 @@ export class PlayState {
     this.questionScreen = null;
     this.answerInput = '';
     this.questionResult = null;
+    this.blackHoleCaptured = false;
+    this.blackHoleDistance = Infinity;
+    this.elapsedTime = 0;
     if (this.answerField) {
       this.answerField.value = '';
       this.answerField.hidden = true;
@@ -331,10 +357,96 @@ export class PlayState {
   }
 
   renderSky(context) {
-    context.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+    const altitude = Math.max(0, -this.cameraY);
+    const stages = [
+      { altitude: 0, top: [104, 209, 244], bottom: [190, 239, 250] },
+      { altitude: 1400, top: [74, 132, 205], bottom: [144, 190, 231] },
+      { altitude: 2600, top: [12, 23, 69], bottom: [37, 48, 94] },
+      { altitude: 4200, top: [27, 12, 67], bottom: [65, 28, 98] },
+      { altitude: 5600, top: [4, 5, 17], bottom: [12, 13, 31] },
+    ];
+    let stageIndex = 1;
+    while (stageIndex < stages.length && altitude > stages[stageIndex].altitude) {
+      stageIndex += 1;
+    }
+    const from = stages[stageIndex - 1];
+    const to = stages[Math.min(stageIndex, stages.length - 1)];
+    const transition = to.altitude === from.altitude
+      ? 1
+      : Math.max(0, Math.min(1, (altitude - from.altitude) / (to.altitude - from.altitude)));
+    const topColor = this.blendColors(from.top, to.top, transition);
+    const bottomColor = this.blendColors(from.bottom, to.bottom, transition);
+    const gradient = context.createLinearGradient(0, 0, 0, this.game.canvas.height);
+    gradient.addColorStop(0, `rgb(${topColor.join(',')})`);
+    gradient.addColorStop(1, `rgb(${bottomColor.join(',')})`);
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+
+    const nebulaFadeIn = Math.max(0, Math.min(1, (altitude - 2500) / 1200));
+    const nebulaFadeOut = Math.max(0, Math.min(1, (5700 - altitude) / 1500));
+    const nebulaOpacity = nebulaFadeIn * nebulaFadeOut;
+    if (nebulaOpacity > 0) {
+      const nebula = context.createRadialGradient(
+        this.game.canvas.width * 0.28,
+        this.game.canvas.height * 0.38,
+        10,
+        this.game.canvas.width * 0.28,
+        this.game.canvas.height * 0.38,
+        this.game.canvas.width * 0.72,
+      );
+      nebula.addColorStop(0, `rgba(183, 73, 198, ${nebulaOpacity * 0.2})`);
+      nebula.addColorStop(1, 'rgba(183, 73, 198, 0)');
+      context.fillStyle = nebula;
+      context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+    }
+
+    const starVisibility = Math.max(0, Math.min(1, (altitude - 850) / 1200));
+    if (starVisibility > 0) {
+      const scroll = (altitude * 0.12) % this.game.canvas.height;
+      for (let index = 0; index < 100; index += 1) {
+        const x = (index * 149 + 37) % this.game.canvas.width;
+        const y = (index * 97 + 53 + scroll) % this.game.canvas.height;
+        const size = index % 9 === 0 ? 3 : 2;
+        const opacity = starVisibility * (0.5 + (index % 4) * 0.14);
+        context.fillStyle = `rgba(245, 250, 255, ${opacity})`;
+        context.fillRect(x, y, size, size);
+      }
+    }
   }
 
   renderScenery(context) {
+    const progress = this.getAscentProgress();
+
+    const moonVisibility = Math.max(0, Math.min(1, (progress - 0.58) / 0.3));
+    if (moonVisibility > 0) {
+      const moonX = this.worldWidth / 2;
+      const moonY = -1510;
+      const moonRadius = 68;
+      context.save();
+      context.globalAlpha = moonVisibility;
+      const glow = context.createRadialGradient(moonX, moonY, moonRadius * 0.65, moonX, moonY, moonRadius * 1.8);
+      glow.addColorStop(0, 'rgba(220, 241, 255, 0.38)');
+      glow.addColorStop(1, 'rgba(220, 241, 255, 0)');
+      context.fillStyle = glow;
+      context.beginPath();
+      context.arc(moonX, moonY, moonRadius * 1.8, 0, Math.PI * 2);
+      context.fill();
+
+      context.fillStyle = '#e5edf0';
+      context.beginPath();
+      context.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = '#c5d3dc';
+      context.beginPath();
+      context.arc(moonX - 22, moonY - 16, 12, 0, Math.PI * 2);
+      context.arc(moonX + 26, moonY + 18, 17, 0, Math.PI * 2);
+      context.arc(moonX - 6, moonY + 38, 7, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+    }
+
+    this.renderBlackHole(context);
+
     context.fillStyle = '#8b5a2b';
     context.fillRect(0, 408, this.game.canvas.width, this.game.canvas.height - 408);
 
@@ -349,6 +461,10 @@ export class PlayState {
       const treeWidth = treeHeight * this.treeImage.naturalWidth / this.treeImage.naturalHeight;
       context.drawImage(this.treeImage, 0, 408 - treeHeight, treeWidth, treeHeight);
     }
+  }
+
+  getAscentProgress() {
+    return Math.max(0, Math.min(1, -this.cameraY / Math.abs(this.worldTop)));
   }
 
   blendColors(startColor, endColor, amount) {
@@ -376,8 +492,117 @@ export class PlayState {
   updateCamera() {
     const viewportHeight = this.game.canvas.height;
     const targetCameraY = this.player.y - viewportHeight * 0.55;
-    const clampedCameraY = Math.max(this.worldTop, Math.min(0, targetCameraY));
+    const clampedCameraY = Math.min(0, targetCameraY);
 
     this.cameraY += (clampedCameraY - this.cameraY) * 0.12;
+  }
+
+  generatePlatformsAhead() {
+    const generationBoundary = this.player.y - this.game.canvas.height;
+
+    while (this.nextPlatformY > generationBoundary) {
+      const x = this.generatedPlatformXs[
+        this.generatedPlatformIndex % this.generatedPlatformXs.length
+      ];
+      const platform = new Platform(x, this.nextPlatformY, 130, 34, this.platformImage);
+      this.platforms.push(platform);
+      this.addPlatformItems(platform, this.generatedPlatformIndex);
+      this.nextPlatformY -= 110;
+      this.generatedPlatformIndex += 1;
+    }
+  }
+
+  addPlatformItems(platform, index) {
+    this.coins.push(new Coin(platform.x + 12, platform.y - 32, this.coinImage));
+
+    if (index % 4 === 1) {
+      const firstNumber = (index % 8) + 2;
+      const secondNumber = (index % 5) + 3;
+      this.questionBlocks.push(new QuestionBlock(
+        platform.x + 48,
+        platform.y - 39,
+        {
+          text: `O que sera impresso?\n\nprint(${firstNumber} + ${secondNumber})\n\nDigite apenas o numero:`,
+          answer: String(firstNumber + secondNumber),
+        },
+        this.starImage,
+      ));
+    }
+
+    if (index % 4 === 3) {
+      this.plants.push(new Plant(
+        platform.x + (platform.width - 28) / 2,
+        platform.y - 43,
+        this.plantImage,
+      ));
+    }
+  }
+
+  updateBlackHole(deltaTime) {
+    const playerCenterX = this.player.x + this.player.width / 2;
+    const playerCenterY = this.player.y + this.player.height / 2;
+    const offsetX = this.blackHole.x - playerCenterX;
+    const offsetY = this.blackHole.y - playerCenterY;
+    const distance = Math.hypot(offsetX, offsetY);
+    this.blackHoleDistance = distance;
+
+    if (distance >= this.blackHole.pullRadius) {
+      return;
+    }
+
+    if (distance <= this.blackHole.eventHorizon) {
+      this.blackHoleCaptured = true;
+      this.gameOver = true;
+      this.game.input.clear();
+      return;
+    }
+
+    const directionX = offsetX / distance;
+    const directionY = offsetY / distance;
+    const strength = 900 * (1 - distance / this.blackHole.pullRadius);
+    const horizontalPullSpeed = Math.min(150, strength * 0.2);
+    this.player.x += directionX * horizontalPullSpeed * deltaTime;
+    this.player.velocityY += directionY * strength * deltaTime;
+  }
+
+  renderBlackHole(context) {
+    const { x, y } = this.blackHole;
+    context.save();
+    context.translate(x, y);
+    context.rotate(this.elapsedTime * 0.12);
+
+    const glow = context.createRadialGradient(0, 0, 30, 0, 0, 205);
+    glow.addColorStop(0, 'rgba(255, 139, 70, 0.32)');
+    glow.addColorStop(0.45, 'rgba(190, 65, 197, 0.18)');
+    glow.addColorStop(1, 'rgba(80, 43, 190, 0)');
+    context.fillStyle = glow;
+    context.beginPath();
+    context.arc(0, 0, 205, 0, Math.PI * 2);
+    context.fill();
+
+    const disk = context.createLinearGradient(-145, 0, 145, 0);
+    disk.addColorStop(0, '#8d4bff');
+    disk.addColorStop(0.45, '#ffcf78');
+    disk.addColorStop(0.58, '#fff0bb');
+    disk.addColorStop(1, '#a442ef');
+    context.shadowColor = '#da84ff';
+    context.shadowBlur = 22;
+    context.strokeStyle = disk;
+    context.lineWidth = 13;
+    context.beginPath();
+    context.ellipse(0, 0, 132, 35, -0.12, 0, Math.PI * 2);
+    context.stroke();
+
+    context.shadowBlur = 0;
+    context.fillStyle = '#02030a';
+    context.beginPath();
+    context.arc(0, 0, 49, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = '#ffd58b';
+    context.lineWidth = 3;
+    context.beginPath();
+    context.ellipse(0, 0, 58, 17, -0.12, Math.PI, Math.PI * 2);
+    context.stroke();
+    context.restore();
   }
 }
