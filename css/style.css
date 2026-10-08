@@ -13,15 +13,81 @@ body {
   min-height: 100vh;
   place-items: center;
   padding: 1rem;
-  background: #bdeeff;
+  background: transparent;
+}
+
+#game-stage {
+  position: relative;
+  width: min(100%, 800px);
 }
 
 canvas {
   display: block;
-  width: min(100%, 800px);
+  width: 100%;
   height: auto;
-  background: #77c9f2;
+  background: transparent;
   border: 6px solid #ffffff;
   image-rendering: pixelated;
   box-shadow: 0 10px 0 #4aa5d1, 0 18px 24px rgb(36 93 124 / 25%);
+}
+
+#answer-input {
+  position: absolute;
+  top: 53%;
+  left: 3%;
+  z-index: 3;
+  width: 94%;
+  height: 14%;
+  padding: 0 1.6rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #163d76;
+  font: bold clamp(0.7rem, 2.2vw, 1rem) monospace;
+}
+
+#menu-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  background: transparent;
+}
+
+#menu-screen iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+#menu-screen::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 52px;
+  background: url('../assets/inicio2_unico.png') no-repeat left bottom / 100% 52px transparent;
+  pointer-events: none;
+}
+
+#start-game {
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  width: 150px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent url('../assets/star.png') center / contain no-repeat;
+  color: transparent;
+  cursor: pointer;
+  font: bold 1.2rem monospace;
+  transform: translateX(-50%);
+}
+
+#start-game:hover {
+  filter: brightness(1.08);
+  background-color: transparent;
 }

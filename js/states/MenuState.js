@@ -1,11 +1,22 @@
 export class MenuState {
   constructor(game) {
     this.game = game;
+    this.menuScreen = document.querySelector('#menu-screen');
+    this.startButton = document.querySelector('#start-game');
+    this.startButton?.addEventListener('click', () => this.game.changeState('play'));
   }
 
-  enter() {}
+  enter() {
+    if (this.menuScreen) {
+      this.menuScreen.hidden = false;
+    }
+  }
 
-  exit() {}
+  exit() {
+    if (this.menuScreen) {
+      this.menuScreen.hidden = true;
+    }
+  }
 
   update() {
     if (this.game.input.isDown('enter') || this.game.input.pointer.pressed) {
@@ -14,8 +25,7 @@ export class MenuState {
   }
 
   render(context) {
-    context.fillStyle = '#77c9f2';
-    context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+    context.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
     context.fillStyle = '#ffffff';
     context.fillRect(90, 95, 78, 16);
     context.fillRect(115, 82, 42, 29);
