@@ -5,11 +5,28 @@ import { Coin } from '../entities/Coin.js';
 import { Plant } from '../entities/Plant.js';
 import { intersects } from '../core/Physics.js';
 
+const questionProgression = [
+  { text: 'O que sera impresso?\n\nprint(2 + 3)\n\nDigite apenas o numero:', answer: '5' },
+  { text: 'O que sera impresso?\n\nprint(8 + 2 * 3)\n\nDigite apenas o numero:', answer: '14' },
+  { text: 'O que sera impresso?\n\nprint(17 // 5 + 8 % 3)\n\nDigite apenas o numero:', answer: '5' },
+  { text: 'O que sera impresso?\n\nprint(len("codigo") * 2 - 3)\n\nDigite apenas o numero:', answer: '9' },
+  { text: 'O que sera impresso?\n\nprint((12 - 4) * 3 + 2)\n\nDigite apenas o numero:', answer: '26' },
+  { text: 'O que sera impresso?\n\nprint(24 // 5 + 3 ** 2)\n\nDigite apenas o numero:', answer: '13' },
+  { text: 'O que sera impresso?\n\nprint(len("programa") * 2 - 6)\n\nDigite apenas o numero:', answer: '10' },
+  { text: 'O que sera impresso?\n\nprint(7 ** 2 % 10 + 18 // 4)\n\nDigite apenas o numero:', answer: '13' },
+  { text: 'O que sera impresso?\n\nprint((15 - 3) * (8 // 4) + 7)\n\nDigite apenas o numero:', answer: '31' },
+  { text: 'O que sera impresso?\n\nprint(5 ** 2 + (17 % 6) * 3)\n\nDigite apenas o numero:', answer: '40' },
+  { text: 'O que sera impresso?\n\nprint(len("computador") * 3 - 2 ** 2)\n\nDigite apenas o numero:', answer: '26' },
+  { text: 'O que sera impresso?\n\nprint(9 ** 2 // 5 + (23 % 7) * 2)\n\nDigite apenas o numero:', answer: '20' },
+];
+
 export class PlayState {
   constructor(game) {
     this.game = game;
     this.score = 0;
     this.gameOver = false;
+    this.levelComplete = false;
+    this.levelCompleteTime = 0;
     this.questionScreen = null;
     this.answerInput = '';
     this.questionResult = null;
@@ -17,7 +34,7 @@ export class PlayState {
     this.worldWidth = 800;
     this.worldTop = -1720;
     this.elapsedTime = 0;
-    this.blackHole = { x: 400, y: -5200, pullRadius: 320, eventHorizon: 48 };
+    this.blackHole = { x: 590, y: -5200, pullRadius: 280, eventHorizon: 46 };
     this.blackHoleDistance = Infinity;
     this.blackHoleCaptured = false;
     this.cloudImage = game.assets.loadImage('cloud', './assets/Nuvem.png');
@@ -28,7 +45,10 @@ export class PlayState {
     this.playerImage = game.assets.loadImage('player', './assets/perso.png');
     this.groundImage = game.assets.loadImage('ground', './assets/chao.png');
     this.starImage = game.assets.loadImage('question-star', './assets/estrela.png');
+    this.questionPanelImage = game.assets.loadImage('question-panel', './assets/cai.png');
+    this.sendButtonImage = game.assets.loadImage('send-button', './assets/enviar.png');
     this.coinImage = game.assets.loadImage('coin', './assets/mo.png');
+    this.coImage = game.assets.loadImage('co', './assets/co.png');
     this.plantImage = game.assets.loadImage('plant', './assets/planta.png');
     this.treeImage = game.assets.loadImage('tree', './assets/ar.png');
     this.castleImage = game.assets.loadImage('castle', './assets/c.png');
@@ -76,36 +96,20 @@ export class PlayState {
     this.generatedPlatformXs = [320, 170, 320, 470, 620, 470];
     this.generatedPlatformIndex = 0;
     this.questionBlocks = [
-      new QuestionBlock(378, 176, {
-        text: 'O que sera impresso?\n\nprint(2 + 3 * 4)\n\nDigite apenas o numero:',
-        answer: '14',
-      }, this.starImage),
-      new QuestionBlock(148, -154, {
-        text: 'O que sera impresso?\n\nprint(5 + 2)\n\nDigite apenas o numero:',
-        answer: '7',
-      }, this.starImage),
-      new QuestionBlock(498, -484, {
-        text: 'O que sera impresso?\n\nprint(len("jogo"))\n\nDigite apenas o numero:',
-        answer: '4',
-      }, this.starImage),
-      new QuestionBlock(348, -814, {
-        text: 'O que sera impresso?\n\nprint(10 // 3)\n\nDigite apenas o numero:',
-        answer: '3',
-      }, this.starImage),
+      new QuestionBlock(218, 66, questionProgression[0], this.starImage),
+      new QuestionBlock(398, -594, questionProgression[1], this.starImage),
+      new QuestionBlock(168, -1254, questionProgression[2], this.starImage),
+      new QuestionBlock(518, -1694, questionProgression[3], this.starImage),
     ];
     this.coins = [
-      new Coin(180 + 65, 320 - 25, this.coinImage),
-      new Coin(170 + 65, 100 - 25, this.coinImage),
-      new Coin(320 + 65, -10 - 25, this.coinImage),
-      new Coin(430 + 65, -890 - 25, this.coinImage),
-      new Coin(430 + 65, -1660 - 25, this.coinImage),
+      new Coin(180 + (130 - 22) / 2, 320 - 25, this.coinImage),
+      new Coin(200 + (130 - 22) / 2, -340 - 25, this.coinImage),
+      new Coin(180 + (130 - 22) / 2, -1000 - 25, this.coinImage),
     ];
     this.plants = [
-      new Plant(401, -273, this.plantImage),
-      new Plant(401, -603, this.plantImage),
-      new Plant(231, -1043, this.plantImage),
-      new Plant(351, -1373, this.plantImage),
-      new Plant(281, -1593, this.plantImage),
+      new Plant(151, -163, this.plantImage),
+      new Plant(351, -823, this.plantImage),
+      new Plant(571, -1483, this.plantImage),
     ];
     this.questionKeyHandler = (event) => {
       if (!this.questionScreen) {
@@ -125,10 +129,23 @@ export class PlayState {
         this.answerInput += event.key;
       }
     };
+    this.questionPointerHandler = () => {
+      if (!this.questionScreen) {
+        return;
+      }
+
+      const button = this.getQuestionButtonBounds();
+      const { x, y } = this.game.input.pointer;
+      if (x >= button.x && x <= button.x + button.width &&
+        y >= button.y && y <= button.y + button.height) {
+        this.submitQuestion();
+      }
+    };
     this.answerField?.addEventListener('input', (event) => {
       this.answerInput = event.target.value;
     });
     window.addEventListener('keydown', this.questionKeyHandler);
+    this.game.canvas.addEventListener('click', this.questionPointerHandler);
   }
 
   enter() {
@@ -138,6 +155,11 @@ export class PlayState {
   exit() {}
 
   update(deltaTime) {
+    if (this.levelComplete) {
+      this.levelCompleteTime += deltaTime;
+      return;
+    }
+
     if (this.questionScreen) {
       return;
     }
@@ -162,6 +184,12 @@ export class PlayState {
     this.updateBlackHole(deltaTime);
     this.updateCamera();
     if (this.gameOver) {
+      return;
+    }
+    if (this.player.y + this.player.height < this.blackHole.y - 150) {
+      this.levelComplete = true;
+      this.levelCompleteTime = 0;
+      this.game.input.clear();
       return;
     }
 
@@ -210,6 +238,20 @@ export class PlayState {
     context.fillText(`PONTOS: ${this.score}`, 18, 30);
     context.font = '14px monospace';
     context.fillText('SETAS/WASD: mover  ESPACO: pular', 18, 52);
+    if (this.coImage.complete && this.coImage.naturalWidth > 0) {
+      const iconHeight = 32;
+      const iconWidth = iconHeight * this.coImage.naturalWidth / this.coImage.naturalHeight;
+      context.save();
+      context.imageSmoothingEnabled = false;
+      context.drawImage(
+        this.coImage,
+        this.game.canvas.width - iconWidth - 16,
+        10,
+        iconWidth,
+        iconHeight,
+      );
+      context.restore();
+    }
     if (this.blackHoleDistance < this.blackHole.pullRadius && !this.gameOver) {
       context.fillStyle = '#ffd47a';
       context.textAlign = 'center';
@@ -231,6 +273,26 @@ export class PlayState {
       context.fillText('Enter ou clique para tentar novamente', this.game.canvas.width / 2, 235);
     }
 
+    if (!this.gameOver && !this.levelComplete && !this.questionScreen) {
+      this.renderTunnelLight(context);
+    }
+
+    if (this.levelComplete) {
+      const flashAlpha = Math.min(1, this.levelCompleteTime / 0.45);
+      context.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
+      context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+      if (this.levelCompleteTime >= 0.45) {
+        context.textAlign = 'center';
+        context.fillStyle = '#102b57';
+        context.font = 'bold 32px monospace';
+        context.fillText('NIVEL CONCLUIDO!', this.game.canvas.width / 2, 190);
+        context.font = '16px monospace';
+        context.fillText('Voce passou pelo buraco negro!', this.game.canvas.width / 2, 224);
+        context.font = '14px monospace';
+        context.fillText(`PONTOS: ${this.score}`, this.game.canvas.width / 2, 256);
+      }
+    }
+
     if (this.questionScreen) {
       this.renderQuestionScreen(context);
     }
@@ -239,6 +301,8 @@ export class PlayState {
   reset() {
     this.score = 0;
     this.gameOver = false;
+    this.levelComplete = false;
+    this.levelCompleteTime = 0;
     this.questionScreen = null;
     this.answerInput = '';
     this.questionResult = null;
@@ -307,52 +371,81 @@ export class PlayState {
     }
   }
 
+  getQuestionButtonBounds() {
+    const panelWidth = Math.min(500, this.game.canvas.width - 32);
+    const panelX = (this.game.canvas.width - panelWidth) / 2;
+    const panelY = (this.game.canvas.height - 280) / 2;
+    return {
+      x: panelX + panelWidth - 150,
+      y: panelY + 203,
+      width: 132,
+      height: 42,
+    };
+  }
+
   renderQuestionScreen(context) {
     const questionLines = this.questionScreen.question.text.split('\n');
     const codeLine = questionLines.find((line) => line.trim().startsWith('print')) || '';
+    const panelWidth = Math.min(500, this.game.canvas.width - 32);
+    const panelHeight = 280;
+    const panelX = (this.game.canvas.width - panelWidth) / 2;
+    const panelY = (this.game.canvas.height - panelHeight) / 2;
 
-    context.fillStyle = '#d9f4fc';
-    context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
-    context.fillStyle = '#f8fbff';
-    context.fillRect(0, 12, this.game.canvas.width, 398);
-    context.strokeStyle = '#1c6fd1';
-    context.lineWidth = 3;
-    context.strokeRect(2, 12, this.game.canvas.width - 4, 398);
+    if (this.questionPanelImage.complete && this.questionPanelImage.naturalWidth > 0) {
+      context.drawImage(this.questionPanelImage, panelX, panelY, panelWidth, panelHeight);
+    }
     context.fillStyle = '#122d73';
     context.textAlign = 'left';
-    context.font = 'bold 25px monospace';
-    context.fillText('Qual e o resultado do codigo abaixo?', 16, 61);
+    context.font = 'bold 18px monospace';
+    context.fillText('Qual e o resultado do codigo abaixo?', panelX + 22, panelY + 36);
 
     context.fillStyle = '#173b70';
-    context.fillRect(8, 82, this.game.canvas.width - 16, 136);
+    context.beginPath();
+    context.roundRect(panelX + 18, panelY + 52, panelWidth - 36, 80, 8);
+    context.fill();
+    context.strokeStyle = '#1675d1';
+    context.lineWidth = 1.5;
+    context.stroke();
     context.fillStyle = '#b9cbea';
-    context.font = 'bold 20px monospace';
-    context.fillText('1 |', 34, 122);
-    context.fillText('2 |', 34, 160);
-    context.fillText('3 |', 34, 198);
+    context.font = 'bold 13px monospace';
+    context.fillText('1 |', panelX + 38, panelY + 76);
+    context.fillText('2 |', panelX + 38, panelY + 100);
+    context.fillText('3 |', panelX + 38, panelY + 124);
     context.fillStyle = '#ffffff';
-    context.font = 'bold 19px monospace';
-    context.fillText(codeLine, 86, 160);
+    context.font = 'bold 13px monospace';
+    context.fillText(codeLine, panelX + 84, panelY + 100);
 
-    context.strokeStyle = '#3578d4';
-    context.lineWidth = 2;
-    context.strokeRect(8, 242, this.game.canvas.width - 16, 64);
-    context.fillStyle = '#2478ed';
-    context.fillRect(518, 320, 254, 68);
     context.fillStyle = '#ffffff';
-    context.textAlign = 'center';
-    context.font = 'bold 20px monospace';
-    context.fillText('ENVIAR  ▶', 645, 361);
+    context.beginPath();
+    context.roundRect(panelX + 18, panelY + 150, panelWidth - 36, 38, 7);
+    context.fill();
+    context.strokeStyle = '#3578d4';
+    context.lineWidth = 1.5;
+    context.stroke();
+    const button = this.getQuestionButtonBounds();
+    if (!this.questionResult && this.sendButtonImage.complete && this.sendButtonImage.naturalWidth > 0) {
+      context.drawImage(this.sendButtonImage, button.x, button.y, button.width, button.height);
+    } else {
+      context.fillStyle = '#2478ed';
+      context.fillRect(button.x, button.y, button.width, button.height);
+      context.fillStyle = '#ffffff';
+      context.textAlign = 'center';
+      context.font = 'bold 16px monospace';
+      context.fillText(
+        this.questionResult ? 'VOLTAR' : 'ENVIAR',
+        button.x + button.width / 2,
+        button.y + button.height / 2 + 6,
+      );
+    }
 
     context.fillStyle = '#5576ac';
-    context.font = '14px monospace';
+    context.font = '12px monospace';
+    context.textAlign = 'center';
     if (this.questionResult) {
       context.fillStyle = this.questionResult.startsWith('Correto') ? '#147a36' : '#a32626';
-      context.fillText(this.questionResult, this.game.canvas.width / 2, 405);
+      context.fillText(this.questionResult, this.game.canvas.width / 2, panelY + 262);
       context.fillStyle = '#5576ac';
-      context.fillText('Pressione Enter para voltar ao jogo', this.game.canvas.width / 2, 425);
-    } else {
-      context.fillText('Digite sua resposta e pressione Enter', this.game.canvas.width / 2, 425);
+      context.fillText('Clique para voltar ou pressione Enter', this.game.canvas.width / 2, panelY + 276);
     }
   }
 
@@ -411,6 +504,19 @@ export class PlayState {
         context.fillStyle = `rgba(245, 250, 255, ${opacity})`;
         context.fillRect(x, y, size, size);
       }
+    }
+
+  }
+
+  renderTunnelLight(context) {
+    const passedPlatforms = this.platforms.filter((platform) =>
+      !platform.drawTextureDirectly && platform.y > this.player.y + this.player.height,
+    ).length;
+    const whiteness = Math.max(0, Math.min(1, (passedPlatforms - 19) / 32));
+
+    if (whiteness > 0) {
+      context.fillStyle = `rgba(255, 255, 255, ${whiteness})`;
+      context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
     }
   }
 
@@ -513,23 +619,23 @@ export class PlayState {
   }
 
   addPlatformItems(platform, index) {
-    this.coins.push(new Coin(platform.x + 12, platform.y - 32, this.coinImage));
+    const itemType = index % 6;
 
-    if (index % 4 === 1) {
-      const firstNumber = (index % 8) + 2;
-      const secondNumber = (index % 5) + 3;
+    if (itemType === 1) {
+      const coinX = platform.x + (platform.width - 22) / 2;
+      this.coins.push(new Coin(coinX, platform.y - 32, this.coinImage));
+    } else if (itemType === 3) {
+      const questionIndex = Math.min(
+        4 + Math.floor(index / 6),
+        questionProgression.length - 1,
+      );
       this.questionBlocks.push(new QuestionBlock(
         platform.x + 48,
         platform.y - 39,
-        {
-          text: `O que sera impresso?\n\nprint(${firstNumber} + ${secondNumber})\n\nDigite apenas o numero:`,
-          answer: String(firstNumber + secondNumber),
-        },
+        questionProgression[questionIndex],
         this.starImage,
       ));
-    }
-
-    if (index % 4 === 3) {
+    } else if (itemType === 5) {
       this.plants.push(new Plant(
         platform.x + (platform.width - 28) / 2,
         platform.y - 43,
@@ -559,8 +665,9 @@ export class PlayState {
 
     const directionX = offsetX / distance;
     const directionY = offsetY / distance;
-    const strength = 900 * (1 - distance / this.blackHole.pullRadius);
-    const horizontalPullSpeed = Math.min(150, strength * 0.2);
+    const pullFactor = 1 - distance / this.blackHole.pullRadius;
+    const strength = 1500 * pullFactor * pullFactor;
+    const horizontalPullSpeed = Math.min(110, strength * 0.18);
     this.player.x += directionX * horizontalPullSpeed * deltaTime;
     this.player.velocityY += directionY * strength * deltaTime;
   }
@@ -569,39 +676,55 @@ export class PlayState {
     const { x, y } = this.blackHole;
     context.save();
     context.translate(x, y);
-    context.rotate(this.elapsedTime * 0.12);
 
-    const glow = context.createRadialGradient(0, 0, 30, 0, 0, 205);
-    glow.addColorStop(0, 'rgba(255, 139, 70, 0.32)');
-    glow.addColorStop(0.45, 'rgba(190, 65, 197, 0.18)');
-    glow.addColorStop(1, 'rgba(80, 43, 190, 0)');
+    const glow = context.createRadialGradient(0, 0, 24, 0, 0, 190);
+    glow.addColorStop(0, 'rgba(255, 112, 42, 0.24)');
+    glow.addColorStop(0.38, 'rgba(239, 76, 40, 0.16)');
+    glow.addColorStop(0.7, 'rgba(80, 118, 255, 0.1)');
+    glow.addColorStop(1, 'rgba(22, 36, 105, 0)');
     context.fillStyle = glow;
     context.beginPath();
     context.arc(0, 0, 205, 0, Math.PI * 2);
     context.fill();
 
-    const disk = context.createLinearGradient(-145, 0, 145, 0);
-    disk.addColorStop(0, '#8d4bff');
-    disk.addColorStop(0.45, '#ffcf78');
-    disk.addColorStop(0.58, '#fff0bb');
-    disk.addColorStop(1, '#a442ef');
-    context.shadowColor = '#da84ff';
-    context.shadowBlur = 22;
-    context.strokeStyle = disk;
-    context.lineWidth = 13;
+    context.save();
+    context.rotate(-0.08);
+    const disk = context.createLinearGradient(-172, -10, 172, 18);
+    disk.addColorStop(0, '#6b202b');
+    disk.addColorStop(0.2, '#ef4b25');
+    disk.addColorStop(0.39, '#ff9b37');
+    disk.addColorStop(0.49, '#fff1bd');
+    disk.addColorStop(0.56, '#ffc15d');
+    disk.addColorStop(0.76, '#e74425');
+    disk.addColorStop(1, '#67243c');
+    context.shadowColor = '#ff7135';
+    context.shadowBlur = 24;
+    context.fillStyle = disk;
     context.beginPath();
-    context.ellipse(0, 0, 132, 35, -0.12, 0, Math.PI * 2);
-    context.stroke();
+    context.ellipse(0, 0, 170, 33, 0, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
 
     context.shadowBlur = 0;
-    context.fillStyle = '#02030a';
+    const shadow = context.createRadialGradient(-10, -12, 4, 0, 0, 52);
+    shadow.addColorStop(0, '#000000');
+    shadow.addColorStop(0.78, '#02030a');
+    shadow.addColorStop(1, '#11182b');
+    context.fillStyle = shadow;
     context.beginPath();
-    context.arc(0, 0, 49, 0, Math.PI * 2);
+    context.arc(0, 0, 47, 0, Math.PI * 2);
     context.fill();
-    context.strokeStyle = '#ffd58b';
-    context.lineWidth = 3;
+
+    context.strokeStyle = 'rgba(255, 220, 151, 0.9)';
+    context.lineWidth = 2;
     context.beginPath();
-    context.ellipse(0, 0, 58, 17, -0.12, Math.PI, Math.PI * 2);
+    context.ellipse(0, 0, 51, 17, -0.08, Math.PI * 1.08, Math.PI * 1.92);
+    context.stroke();
+
+    context.strokeStyle = 'rgba(255, 111, 52, 0.9)';
+    context.lineWidth = 4;
+    context.beginPath();
+    context.ellipse(0, 1, 83, 20, -0.08, 0.12, Math.PI - 0.12);
     context.stroke();
     context.restore();
   }
