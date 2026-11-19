@@ -26,7 +26,6 @@ export class PlayState {
     this.score = 0;
     this.gameOver = false;
     this.levelComplete = false;
-    this.levelCompleteTime = 0;
     this.questionScreen = null;
     this.answerInput = '';
     this.questionResult = null;
@@ -44,11 +43,11 @@ export class PlayState {
     );
     this.playerImage = game.assets.loadImage('player', './assets/perso.png');
     this.groundImage = game.assets.loadImage('ground', './assets/chao.png');
+    this.questionBackgroundImage = game.assets.loadImage('question-background', './assets/1.png');
     this.starImage = game.assets.loadImage('question-star', './assets/estrela.png');
-    this.questionPanelImage = game.assets.loadImage('question-panel', './assets/cai.png');
     this.sendButtonImage = game.assets.loadImage('send-button', './assets/enviar.png');
     this.coinImage = game.assets.loadImage('coin', './assets/mo.png');
-    this.coImage = game.assets.loadImage('co', './assets/co.png');
+    this.cofImage = game.assets.loadImage('cof', './assets/cof.png');
     this.plantImage = game.assets.loadImage('plant', './assets/planta.png');
     this.treeImage = game.assets.loadImage('tree', './assets/ar.png');
     this.castleImage = game.assets.loadImage('castle', './assets/c.png');
@@ -67,11 +66,7 @@ export class PlayState {
       { x: 580, y: -1200, width: 150, height: 77 },
     ];
     this.platforms = [
-      new Platform(0, 408, 240, 42, this.groundImage, true),
-      new Platform(160, 408, 240, 42, this.groundImage, true),
-      new Platform(320, 408, 240, 42, this.groundImage, true),
-      new Platform(480, 408, 240, 42, this.groundImage, true),
-      new Platform(640, 408, 240, 42, this.groundImage, true),
+      new Platform(0, 408, 800, 42, this.groundImage, true),
       new Platform(180, 320, 130, 34, this.platformImage),
       new Platform(330, 210, 130, 34, this.platformImage),
       new Platform(170, 100, 130, 34, this.platformImage),
@@ -156,7 +151,6 @@ export class PlayState {
 
   update(deltaTime) {
     if (this.levelComplete) {
-      this.levelCompleteTime += deltaTime;
       return;
     }
 
@@ -188,7 +182,6 @@ export class PlayState {
     }
     if (this.player.y + this.player.height < this.blackHole.y - 150) {
       this.levelComplete = true;
-      this.levelCompleteTime = 0;
       this.game.input.clear();
       return;
     }
@@ -219,43 +212,57 @@ export class PlayState {
   }
 
   render(context) {
-    this.renderSky(context);
-
-    context.save();
-    context.translate(0, -this.cameraY);
-    this.renderScenery(context);
-    this.renderClouds(context);
-    for (const platform of this.platforms) platform.render(context);
-    for (const coin of this.coins) coin.render(context);
-    for (const block of this.questionBlocks) block.render(context);
-    for (const plant of this.plants) plant.render(context);
-    this.player.render(context);
-    context.restore();
-
-    context.fillStyle = '#ffffff';
-    context.font = 'bold 18px monospace';
-    context.textAlign = 'left';
-    context.fillText(`PONTOS: ${this.score}`, 18, 30);
-    context.font = '14px monospace';
-    context.fillText('SETAS/WASD: mover  ESPACO: pular', 18, 52);
-    if (this.coImage.complete && this.coImage.naturalWidth > 0) {
-      const iconHeight = 32;
-      const iconWidth = iconHeight * this.coImage.naturalWidth / this.coImage.naturalHeight;
+    if (this.questionScreen && this.questionBackgroundImage.complete &&
+      this.questionBackgroundImage.naturalWidth > 0) {
       context.save();
       context.imageSmoothingEnabled = false;
       context.drawImage(
-        this.coImage,
-        this.game.canvas.width - iconWidth - 16,
-        10,
-        iconWidth,
-        iconHeight,
+        this.questionBackgroundImage,
+        0,
+        0,
+        this.game.canvas.width,
+        this.game.canvas.height,
       );
       context.restore();
+    } else {
+      this.renderSky(context);
+      context.save();
+      context.translate(0, -this.cameraY);
+      this.renderScenery(context);
+      this.renderClouds(context);
+      for (const platform of this.platforms) platform.render(context);
+      for (const coin of this.coins) coin.render(context);
+      for (const block of this.questionBlocks) block.render(context);
+      for (const plant of this.plants) plant.render(context);
+      this.player.render(context);
+      context.restore();
     }
-    if (this.blackHoleDistance < this.blackHole.pullRadius && !this.gameOver) {
-      context.fillStyle = '#ffd47a';
-      context.textAlign = 'center';
-      context.fillText('ATRACAO DO BURACO NEGRO!', this.game.canvas.width / 2, 78);
+
+    if (!this.questionScreen) {
+      context.fillStyle = '#ffffff';
+      context.font = 'bold 18px monospace';
+      context.textAlign = 'left';
+      context.fillText(`PONTOS: ${this.score}`, 18, 30);
+      context.font = '14px monospace';
+      context.fillText('SETAS/WASD: mover  ESPACO: pular', 18, 52);
+      if (this.cofImage.complete && this.cofImage.naturalWidth > 0) {
+        const iconSize = 44;
+        context.save();
+        context.imageSmoothingEnabled = false;
+        context.drawImage(
+          this.cofImage,
+          this.game.canvas.width - iconSize - 16,
+          10,
+          iconSize,
+          iconSize,
+        );
+        context.restore();
+      }
+      if (this.blackHoleDistance < this.blackHole.pullRadius && !this.gameOver) {
+        context.fillStyle = '#ffd47a';
+        context.textAlign = 'center';
+        context.fillText('ATRACAO DO BURACO NEGRO!', this.game.canvas.width / 2, 78);
+      }
     }
 
     if (this.gameOver) {
@@ -273,24 +280,15 @@ export class PlayState {
       context.fillText('Enter ou clique para tentar novamente', this.game.canvas.width / 2, 235);
     }
 
-    if (!this.gameOver && !this.levelComplete && !this.questionScreen) {
-      this.renderTunnelLight(context);
-    }
-
     if (this.levelComplete) {
-      const flashAlpha = Math.min(1, this.levelCompleteTime / 0.45);
-      context.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
-      context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
-      if (this.levelCompleteTime >= 0.45) {
-        context.textAlign = 'center';
-        context.fillStyle = '#102b57';
-        context.font = 'bold 32px monospace';
-        context.fillText('NIVEL CONCLUIDO!', this.game.canvas.width / 2, 190);
-        context.font = '16px monospace';
-        context.fillText('Voce passou pelo buraco negro!', this.game.canvas.width / 2, 224);
-        context.font = '14px monospace';
-        context.fillText(`PONTOS: ${this.score}`, this.game.canvas.width / 2, 256);
-      }
+      context.textAlign = 'center';
+      context.fillStyle = '#ffffff';
+      context.font = 'bold 32px monospace';
+      context.fillText('NIVEL CONCLUIDO!', this.game.canvas.width / 2, 190);
+      context.font = '16px monospace';
+      context.fillText('Voce passou pelo buraco negro!', this.game.canvas.width / 2, 224);
+      context.font = '14px monospace';
+      context.fillText(`PONTOS: ${this.score}`, this.game.canvas.width / 2, 256);
     }
 
     if (this.questionScreen) {
@@ -302,7 +300,6 @@ export class PlayState {
     this.score = 0;
     this.gameOver = false;
     this.levelComplete = false;
-    this.levelCompleteTime = 0;
     this.questionScreen = null;
     this.answerInput = '';
     this.questionResult = null;
@@ -391,21 +388,22 @@ export class PlayState {
     const panelX = (this.game.canvas.width - panelWidth) / 2;
     const panelY = (this.game.canvas.height - panelHeight) / 2;
 
-    if (this.questionPanelImage.complete && this.questionPanelImage.naturalWidth > 0) {
-      context.drawImage(this.questionPanelImage, panelX, panelY, panelWidth, panelHeight);
-    }
+    context.fillStyle = '#0b5eae';
+    context.fillRect(panelX + 8, panelY, panelWidth - 16, panelHeight);
+    context.fillRect(panelX, panelY + 8, panelWidth, panelHeight - 16);
+    context.fillStyle = '#f5fbff';
+    context.fillRect(panelX + 12, panelY + 6, panelWidth - 24, panelHeight - 12);
+    context.fillRect(panelX + 6, panelY + 12, panelWidth - 12, panelHeight - 24);
     context.fillStyle = '#122d73';
     context.textAlign = 'left';
     context.font = 'bold 18px monospace';
     context.fillText('Qual e o resultado do codigo abaixo?', panelX + 22, panelY + 36);
 
     context.fillStyle = '#173b70';
-    context.beginPath();
-    context.roundRect(panelX + 18, panelY + 52, panelWidth - 36, 80, 8);
-    context.fill();
+    context.fillRect(panelX + 18, panelY + 52, panelWidth - 36, 80);
     context.strokeStyle = '#1675d1';
     context.lineWidth = 1.5;
-    context.stroke();
+    context.strokeRect(panelX + 18, panelY + 52, panelWidth - 36, 80);
     context.fillStyle = '#b9cbea';
     context.font = 'bold 13px monospace';
     context.fillText('1 |', panelX + 38, panelY + 76);
@@ -416,12 +414,10 @@ export class PlayState {
     context.fillText(codeLine, panelX + 84, panelY + 100);
 
     context.fillStyle = '#ffffff';
-    context.beginPath();
-    context.roundRect(panelX + 18, panelY + 150, panelWidth - 36, 38, 7);
-    context.fill();
+    context.fillRect(panelX + 18, panelY + 150, panelWidth - 36, 38);
     context.strokeStyle = '#3578d4';
     context.lineWidth = 1.5;
-    context.stroke();
+    context.strokeRect(panelX + 18, panelY + 150, panelWidth - 36, 38);
     const button = this.getQuestionButtonBounds();
     if (!this.questionResult && this.sendButtonImage.complete && this.sendButtonImage.naturalWidth > 0) {
       context.drawImage(this.sendButtonImage, button.x, button.y, button.width, button.height);
@@ -506,18 +502,6 @@ export class PlayState {
       }
     }
 
-  }
-
-  renderTunnelLight(context) {
-    const passedPlatforms = this.platforms.filter((platform) =>
-      !platform.drawTextureDirectly && platform.y > this.player.y + this.player.height,
-    ).length;
-    const whiteness = Math.max(0, Math.min(1, (passedPlatforms - 19) / 32));
-
-    if (whiteness > 0) {
-      context.fillStyle = `rgba(255, 255, 255, ${whiteness})`;
-      context.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
-    }
   }
 
   renderScenery(context) {

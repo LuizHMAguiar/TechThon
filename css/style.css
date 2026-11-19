@@ -13,7 +13,7 @@ body {
   min-height: 100vh;
   place-items: center;
   padding: 1rem;
-  background: transparent;
+  background: #add8e6;
 }
 
 #game-stage {
