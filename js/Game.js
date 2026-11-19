@@ -19,6 +19,20 @@ export class Game {
     this.frameId = null;
   }
 
+  toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      const element = document.documentElement;
+      if (element.requestFullscreen) {
+        element.requestFullscreen().catch(() => undefined);
+      }
+      return;
+    }
+
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(() => undefined);
+    }
+  }
+
   start() {
     this.currentState.enter();
     this.frameId = requestAnimationFrame((time) => this.loop(time));

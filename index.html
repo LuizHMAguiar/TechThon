@@ -4,14 +4,152 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Meu jogo canvas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
     <div id="game-stage">
       <canvas id="game" width="800" height="450" aria-label="Area do jogo"></canvas>
       <input id="answer-input" type="text" aria-label="Digite sua resposta" placeholder="Digite sua resposta..." autocomplete="off" hidden />
+      <aside id="tutorial-hints" aria-label="Instruções do jogo" hidden>
+        <p>A/D ou as setas: mover.</p>
+        <p>Espaço: pular.</p>
+        <p>Pule nos blocos e plataformas e responda às perguntas para ganhar pontos.</p>
+      </aside>
+      <dialog id="shop-dialog" aria-label="Loja">
+        <section id="shop-content" aria-labelledby="shop-title">
+          <h2 id="shop-title">
+            <img src="assets/car.png" alt="" aria-hidden="true" />
+            <span>LOJA</span>
+          </h2>
+          <p id="shop-instruction">ESCOLHA SEUS ITENS/PERSONAGENS</p>
+          <div class="shop-item" aria-label="Itens e personagens da loja">
+            <div class="shop-row">
+              <div class="shop-entry">
+                <img src="assets/b1.png" alt="Item da loja" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+              <div class="shop-entry">
+                <img src="assets/b2.png" alt="Personagem da loja" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+              <div class="shop-entry">
+                <img src="assets/b3.png" alt="Personagem 3" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+              <div class="shop-entry">
+                <img src="assets/b4.png" alt="Personagem 4" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+            </div>
+            <div class="shop-row">
+              <div class="shop-entry">
+                <img src="assets/b5.png" alt="Personagem 5" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+              <div class="shop-entry">
+                <img src="assets/b7.png" alt="Personagem 7" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+              <div class="shop-entry">
+                <img src="assets/b8.png" alt="Personagem 8" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+              <div class="shop-entry">
+                <img src="assets/b9.png" alt="Personagem 9" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+            </div>
+            <div class="shop-row">
+              <div class="shop-entry">
+                <img src="assets/b10.png" alt="Personagem 10" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+              <div class="shop-entry">
+                <img src="assets/b11.png" alt="Personagem 11" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">500</span>
+                </div>
+              </div>
+              <div class="shop-weapon-entry">
+                <img class="shop-weapon" src="assets/esp.png" alt="Espada" />
+                <div class="shop-price">
+                  <img class="shop-coin" src="assets/mo.png" alt="" aria-hidden="true" />
+                  <span class="shop-status">1000</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <button id="close-shop" type="button" aria-label="Fechar loja">×</button>
+      </dialog>
+      <dialog id="settings-dialog" aria-labelledby="settings-title">
+        <button id="close-settings" type="button" aria-label="Fechar configurações">×</button>
+        <h2 id="settings-title">CONFIGURAÇÕES</h2>
+        <button id="tutorial-toggle" type="button" aria-pressed="false" aria-controls="tutorial-hints">
+          TUTORIAL: DESLIGADO
+        </button>
+        <button id="sound-toggle" type="button" aria-pressed="true">
+          EFEITOS: LIGADOS
+        </button>
+        <button id="music-toggle" type="button" aria-pressed="true">
+          MÚSICA: LIGADA
+        </button>
+        <button id="open-shop" type="button">LOJA</button>
+      </dialog>
+      <dialog id="doubt-dialog" aria-labelledby="doubt-title">
+        <button id="close-doubt" type="button" aria-label="Fechar tópicos">×</button>
+        <h2 id="doubt-title">TÓPICOS</h2>
+        <fieldset id="doubt-topics">
+          <legend>Escolha um tópico</legend>
+          <ul>
+            <li><button type="button" data-hint="Variáveis guardam valores para serem usados depois. Exemplo: pontos = 10 guarda o número 10 em pontos." aria-pressed="false">Variáveis</button></li>
+            <li><button type="button" data-hint="+ soma valores. Exemplo: 4 + 3 = 7. Já - subtrai: 9 - 4 = 5." aria-pressed="false">Soma e subtração</button></li>
+            <li><button type="button" data-hint="* representa multiplicação. Ela acontece antes da soma e da subtração. Exemplo: 2 + 3 * 4 = 14." aria-pressed="false">Multiplicação e ordem</button></li>
+            <li><button type="button" data-hint="// divide e descarta a parte decimal. Exemplo: 17 // 5 = 3." aria-pressed="false">Divisão inteira //</button></li>
+            <li><button type="button" data-hint="% devolve o resto da divisão. Exemplo: 17 % 5 = 2." aria-pressed="false">Resto %</button></li>
+            <li><button type="button" data-hint="** representa potência. Exemplo: 3 ** 2 significa 3 × 3, que é 9." aria-pressed="false">Potência **</button></li>
+            <li><button type="button" data-hint="Texto fica entre aspas. len(texto) conta os caracteres. Exemplo: len(&quot;gato&quot;) = 4." aria-pressed="false">Texto e len()</button></li>
+            <li><button type="button" data-hint="print() mostra na tela o valor que está entre parênteses. Resolva a expressão dentro dele para encontrar a resposta." aria-pressed="false">print() e resposta</button></li>
+          </ul>
+        </fieldset>
+        <p id="doubt-hint" hidden role="note" aria-live="polite"></p>
+      </dialog>
       <div id="menu-screen" aria-label="Tela inicial">
         <iframe src="assets/jogar.pdf" title="Tela inicial do jogo"></iframe>
+        <h1 id="menu-title"><span class="menu-title-initial">T<img id="menu-cat" src="assets/ca.png" alt="" aria-hidden="true" /></span>ECHTHON</h1>
+        <img class="menu-cloud menu-cloud--left" src="assets/Nuvem.png" alt="" aria-hidden="true" />
+        <img class="menu-cloud menu-cloud--right" src="assets/Nuvem.png" alt="" aria-hidden="true" />
         <img id="menu-tree" src="assets/arvore.png" alt="" aria-hidden="true" />
         <img id="menu-ini3" src="assets/ini3.png" alt="" aria-hidden="true" />
         <img id="menu-tower" src="assets/torre.png" alt="" aria-hidden="true" />

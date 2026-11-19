@@ -9,22 +9,25 @@ body {
 }
 
 body {
-  display: grid;
+  display: flex;
   min-height: 100vh;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   padding: 1rem;
-  background: #add8e6;
+  background: #c2e4f0;
 }
 
 #game-stage {
   position: relative;
-  width: min(100%, 800px);
+  width: min(100%, 1200px);
+  aspect-ratio: 800 / 450;
+  max-width: calc(100vw - 2rem);
 }
 
 canvas {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   background: transparent;
   border: 6px solid #ffffff;
   image-rendering: pixelated;
@@ -33,11 +36,11 @@ canvas {
 
 #answer-input {
   position: absolute;
-  top: 52%;
+  top: 43.8%;
   left: 21%;
   z-index: 3;
   width: 58%;
-  height: 8.5%;
+  height: 7.1%;
   padding: 0 0.8rem;
   border: 0;
   outline: 0;
@@ -46,16 +49,353 @@ canvas {
   font: bold clamp(0.7rem, 2.2vw, 1rem) monospace;
 }
 
+#tutorial-hints[hidden] {
+  display: none;
+}
+
+#settings-dialog {
+  width: min(320px, calc(100vw - 2rem));
+  padding: 2rem 1.25rem 1.25rem;
+  border: 4px solid #12366d;
+  background: #c2e4f0;
+  color: #12366d;
+  box-shadow: 0 8px 0 #4aa5d1;
+}
+
+#settings-dialog::backdrop {
+  background: rgb(18 54 109 / 55%);
+}
+
+#settings-title {
+  margin: 0 0 1rem;
+  font: 0.8rem/1.6 'Press Start 2P', monospace;
+  text-align: center;
+}
+
+#tutorial-toggle,
+#sound-toggle,
+#music-toggle,
+#open-shop {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  border: 3px solid #12366d;
+  background: #ffffff;
+  color: #12366d;
+  cursor: pointer;
+  font: 0.65rem/1.6 'Press Start 2P', monospace;
+}
+
+#tutorial-toggle[aria-pressed='true'],
+#sound-toggle[aria-pressed='true'],
+#music-toggle[aria-pressed='true'] {
+  background: #12366d;
+  color: #ffffff;
+}
+
+#close-settings {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.35rem;
+  padding: 0.2rem 0.4rem;
+  border: 0;
+  background: transparent;
+  color: #12366d;
+  cursor: pointer;
+  font: bold 1.25rem monospace;
+}
+
+#tutorial-hints {
+  position: absolute;
+  z-index: 2;
+  top: 21%;
+  right: 1%;
+  width: min(28%, 14rem);
+  padding: 0.5rem;
+  border: 2px solid #12366d;
+  background: #eff8ff;
+  color: #12366d;
+  font: clamp(0.55rem, 1vw, 0.75rem)/1.5 monospace;
+}
+
+#tutorial-hints p {
+  margin: 0;
+}
+
+#tutorial-hints p + p {
+  margin-top: 0.4rem;
+}
+
+#shop-dialog {
+  position: fixed;
+  min-width: min(240px, calc(100vw - 2rem));
+  padding: 2rem;
+  border: 4px solid #12366d;
+  background: #c2e4f0;
+  box-shadow: 0 8px 0 #4aa5d1;
+}
+
+#shop-dialog.shop-dialog--expanded {
+  width: min(90vw, 720px);
+  height: min(75vh, 520px);
+  min-height: min(280px, calc(100vh - 3rem));
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+}
+
+#shop-dialog::backdrop {
+  background: rgb(18 54 109 / 55%);
+}
+
+#shop-title img {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+#shop-content {
+  display: none;
+}
+
+#shop-dialog.shop-dialog--expanded #shop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#shop-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0;
+  color: #12366d;
+  font: 1rem 'Press Start 2P', monospace;
+}
+
+#shop-instruction {
+  margin: 1.5rem 0 0;
+  color: #12366d;
+  font: clamp(0.55rem, 1.3vw, 0.8rem)/1.8 'Press Start 2P', monospace;
+  text-align: center;
+}
+
+.shop-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 1.5rem;
+}
+
+.shop-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem 4.75rem;
+  width: 100%;
+}
+
+.shop-item img {
+  display: block;
+  width: 50px;
+  height: 82px;
+  object-fit: fill;
+  image-rendering: pixelated;
+}
+
+.shop-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.shop-item .shop-coin {
+  width: 20px;
+  height: 20px;
+  margin-top: 0.25rem;
+  object-fit: contain;
+}
+
+.shop-price {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.shop-price .shop-coin {
+  margin-top: 0;
+}
+
+.shop-status {
+  color: #12366d;
+  font: 0.45rem/1.2 'Press Start 2P', monospace;
+  white-space: nowrap;
+}
+
+.shop-item .shop-weapon {
+  height: 50px;
+  object-fit: contain;
+}
+
+.shop-weapon-entry {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+}
+
+#close-shop {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.35rem;
+  padding: 0.2rem 0.4rem;
+  border: 0;
+  background: transparent;
+  color: #12366d;
+  cursor: pointer;
+  font: bold 1.25rem monospace;
+}
+
+#doubt-dialog {
+  width: min(380px, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: min(420px, calc(100vh - 2rem));
+  overflow-y: auto;
+  padding: 1rem;
+  border: 4px solid #12366d;
+  background: #c2e4f0;
+  color: #12366d;
+  box-shadow: 0 8px 0 #4aa5d1;
+  font-family: monospace;
+}
+
+#doubt-dialog::backdrop {
+  background: rgb(18 54 109 / 55%);
+}
+
+#doubt-dialog h2 {
+  margin: 0 1.5rem 0 0;
+  font: 0.9rem/1.6 'Press Start 2P', monospace;
+}
+
+#doubt-topics {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0.4rem;
+  border: 2px solid #3578d4;
+  background: #eff8ff;
+}
+
+#doubt-topics legend {
+  padding: 0 0.25rem;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+#doubt-topics ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#doubt-topics button {
+  width: 100%;
+  padding: 0.4rem;
+  border: 1px solid #3578d4;
+  background: #ffffff;
+  color: #163d76;
+  cursor: pointer;
+  font: 0.75rem/1.2 monospace;
+  text-align: left;
+}
+
+#doubt-topics button:hover,
+#doubt-topics button:focus-visible,
+#doubt-topics button[aria-pressed='true'] {
+  background: #c2e4f0;
+}
+
+#doubt-topics button:focus-visible {
+  outline: 2px solid #12366d;
+  outline-offset: 1px;
+}
+
+#doubt-hint {
+  margin: 0;
+  padding: 0.5rem;
+  border-left: 4px solid #4aa5d1;
+  background: #eff8ff;
+  color: #163d76;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+#close-doubt {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.35rem;
+  padding: 0.2rem 0.4rem;
+  border: 0;
+  background: transparent;
+  color: #12366d;
+  cursor: pointer;
+  font: bold 1.25rem monospace;
+}
+
 #menu-screen {
   position: absolute;
   inset: 0;
   z-index: 2;
   overflow: hidden;
-  background: #add8e6;
+  background: #c2e4f0;
 }
 
 #menu-screen iframe {
   display: none;
+}
+
+#menu-title {
+  position: absolute;
+  z-index: 4;
+  top: 42%;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  color: #12366d;
+  font: clamp(1.5rem, 8vw, 4rem)/1.6 'Press Start 2P', monospace;
+  font-weight: 400;
+  text-align: center;
+  text-shadow: 3px 4px 7px rgb(18 54 109 / 42%);
+  transform: translateY(-50%);
+}
+
+.menu-title-initial {
+  position: relative;
+  display: inline-block;
+}
+
+#menu-cat {
+  position: absolute;
+  top: -0.25em;
+  left: 50%;
+  width: 0.5em;
+  height: auto;
+  pointer-events: none;
+  image-rendering: pixelated;
+  transform: translateX(-50%);
 }
 
 #menu-tower,
@@ -72,8 +412,35 @@ canvas {
   image-rendering: pixelated;
 }
 
+.menu-cloud {
+  position: absolute;
+  z-index: 1;
+  height: auto;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.menu-cloud--left {
+  top: 4%;
+  left: 3%;
+  width: clamp(72px, 23%, 190px);
+}
+
+.menu-cloud--center {
+  top: 13%;
+  left: 41%;
+  width: clamp(64px, 18%, 150px);
+}
+
+.menu-cloud--right {
+  top: 6%;
+  right: 3%;
+  width: clamp(72px, 22%, 185px);
+}
+
 #menu-tower {
   right: 2%;
+  bottom: 8%;
 }
 
 #menu-tree {

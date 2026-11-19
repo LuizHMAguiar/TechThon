@@ -19,6 +19,7 @@ export class Player extends Entity {
     const previousY = this.y;
     const jumpHeld = input.isDown('arrowup') || input.isDown('w') || input.isDown(' ');
     const jumpPressed = jumpHeld && !this.jumpHeld;
+    let jumped = false;
     this.jumpHeld = jumpHeld;
     const horizontalDirection = Number(input.isDown('arrowright') || input.isDown('d'))
       - Number(input.isDown('arrowleft') || input.isDown('a'));
@@ -33,6 +34,7 @@ export class Player extends Entity {
       this.velocityY = -this.jumpStrength;
       this.grounded = false;
       this.jumpsRemaining -= 1;
+      jumped = true;
     }
 
     this.velocityY += this.gravity * deltaTime;
@@ -63,6 +65,8 @@ export class Player extends Entity {
       this.grounded = false;
       this.jumpsRemaining = 1;
     }
+
+    return jumped;
   }
 
   render(context) {

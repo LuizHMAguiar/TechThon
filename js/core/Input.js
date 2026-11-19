@@ -4,8 +4,15 @@ export class Input {
     this.pointer = { x: 0, y: 0, pressed: false };
 
     window.addEventListener('keydown', (event) => {
+      const target = event.target;
+      if (target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.matches('input, textarea, select, button, a, [role="button"]'))) {
+        return;
+      }
+
       const key = event.key.toLowerCase();
-      if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'w', 'a', 's', 'd'].includes(key)) {
+      if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'w', 'a', 's', 'd', 'f'].includes(key)) {
         event.preventDefault();
         this.keys.add(key);
       }

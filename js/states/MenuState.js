@@ -3,7 +3,11 @@ export class MenuState {
     this.game = game;
     this.menuScreen = document.querySelector('#menu-screen');
     this.startButton = document.querySelector('#start-game');
-    this.startButton?.addEventListener('click', () => this.game.changeState('play'));
+
+    this.startButton?.addEventListener('click', () => {
+      this.game.toggleFullscreen();
+      this.game.changeState('play');
+    });
   }
 
   enter() {
@@ -19,7 +23,14 @@ export class MenuState {
   }
 
   update() {
+    if (this.game.input.isDown('f')) {
+      this.game.toggleFullscreen();
+      this.game.input.clear();
+      return;
+    }
+
     if (this.game.input.isDown('enter') || this.game.input.pointer.pressed) {
+      this.game.toggleFullscreen();
       this.game.changeState('play');
     }
   }
